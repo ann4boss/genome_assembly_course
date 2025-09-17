@@ -1,4 +1,4 @@
-/data/users/aboss/assembly_annotation_course/data
-/data/users/aboss/assembly_annotation_course/outputs
-/data/users/aboss/assembly_annotation_course/errors
-/data/users/aboss/assembly_annotation_course/analysis/08_trinity_assembly
+/data
+/outputs
+/errors
+08_trinity_assembly
