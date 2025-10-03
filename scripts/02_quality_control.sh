@@ -33,7 +33,7 @@ for SAMPLE in "${SAMPLES[@]}"; do
         apptainer exec "${APPTAINER_FASTQC}" fastqc \
             -t "${SLURM_CPUS_PER_TASK}" \
             -o "${OUTPUT_DIR}" \
-            "${SAMPLE}_${FASTQ_FILES[@]}"
+            "${FASTQ_FILES[@]}"
 
         if [[ $? -eq 0 ]]; then
             echo "FastQC completed successfully for ${SAMPLE}."

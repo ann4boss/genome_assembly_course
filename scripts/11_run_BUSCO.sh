@@ -13,50 +13,51 @@
 # --- Variables ---
 PROJECT_DIR="/data/users/${USER}/assembly_annotation_course"
 OUTPUT_DIR="${PROJECT_DIR}/analysis/09_busco_results"
-BUSCO_DB="${PROJECT_DIR}/data/02_busco_dataset/brassicales_odb10"
+ASSEMBLIES_DIR="${PROJECT_DIR}/data/03_assemblies"
+#BUSCO_DB="${PROJECT_DIR}/data/02_busco_dataset/brassicales_odb10"
 THREADS="${SLURM_CPUS_PER_TASK}"
-APPTAINER_BUSCO="/containers/apptainer/busco_5.8.2.sif"
+module load BUSCO/5.4.2-foss-2021a
 
-
-
-# Check if FASTA_FILE is provided as an argument, otherwise exit with usage message
-if [ -z "$1" ]; then
-  echo "Usage: $0 <path_to_fasta_file>"
-  exit 1
-fi
-
-GENOME="$1"
-
-# Create directories
 mkdir -p "${OUTPUT_DIR}"
 
-echo "Starting BUSCO analysis for: ${GENOME}"
-echo "Output directory: ${OUTPUT_DIR}"
-
-# Extract the specific directory name from the genome path
-ASSEMBLY_METHOD=$(basename $(dirname $(dirname "${GENOME}")))
-SAMPLE_NAME=$(basename $(dirname "${GENOME}"))
-FULL_NAME="${ASSEMBLY_METHOD}_${SAMPLE_NAME}_busco"
+# Find all FASTA files in the assemblies directory
+find "${ASSEMBLIES_DIR}" -type f \( -name "*.fa" -o -name "*.fasta" -o -name "*.fna" \) | while read -r GENOME; do
 
 
-# --- Run BUSCO with local database ---
-apptainer exec --bind /data "${APPTAINER_BUSCO}" busco \
-    -i "${GENOME}" \
-    -o "${FULL_NAME}" \
-    --out_path "${OUTPUT_DIR}" \
-    -m genome \
-    -l "${BUSCO_DB}" \
-    --cpu "${THREADS}" \
-    --download_path "${BUSCO_DB}" \
-    --offline \
-    --force
+  echo "Processing: ${GENOME}"
 
+  # Extract sample information from path
+  ASSEMBLY_METHOD=$(basename $(dirname "${GENOME}"))
+  SAMPLE_NAME=$(basename "${GENOME%.*}")
+  FULL_NAME="${ASSEMBLY_METHOD}_${SAMPLE_NAME}_busco"
 
+  # Determine mode based on file type/name
+  if [[ "${GENOME}" == *"trinity"* ]] || [[ "${GENOME}" == *"transcriptome"* ]]; then
+      MODE="transcriptome"
+      echo "Running in transcriptome mode (Trinity assembly detected)"
+  else
+      MODE="genome"
+      echo "Running in genome mode"
+  fi
 
-# Check exit status
-if [[ $? -eq 0 ]]; then
-    echo "BUSCO analysis completed successfully for ${GENOME}"
-else
-    echo "BUSCO analysis failed for ${GENOME}"
-    exit 1
-fi
+  # Run BUSCO with auto-lineage
+  busco \
+      -i "${GENOME}" \
+      -o "${FULL_NAME}" \
+      --out_path "${OUTPUT_DIR}" \
+      -m "${MODE}" \
+      --auto-lineage \
+      --cpu "${THREADS}" \
+      --force
+
+  # Check if BUSCO ran successfully
+  if [ $? -eq 0 ]; then
+      echo "BUSCO analysis completed successfully for ${GENOME}"
+  else
+      echo "Error: BUSCO analysis failed for ${GENOME}"
+  fi
+
+  echo "----------------------------------------"
+done
+
+echo "All BUSCO analyses completed"

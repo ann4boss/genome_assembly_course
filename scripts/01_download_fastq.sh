@@ -15,11 +15,8 @@ COURSE_DATA_DIR="/data/courses/assembly-annotation-course/raw_data"
 mkdir -p "${DATA_DIR}"
 cd "${DATA_DIR}" || exit 1   # exit if cd fails
 
-# --- Create symlinks (force overwrite if they exist) ---
-#ln -sfn "${COURSE_DATA_DIR}/${ACCESSION}" .
-#ln -sfn "${COURSE_DATA_DIR}/RNAseq_Sha" .
 
-# --- Copy data ---
+# --- Copy PacBio data ---
 for ACC in "${ACCESSION[@]}"; do
     echo "Copying ${ACC}..."
     cp -r "${COURSE_DATA_DIR}/${ACC}" .
